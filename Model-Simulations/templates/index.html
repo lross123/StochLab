@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Stochastic Processes Interactive Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            margin-bottom: 10px;
+        }
+        label {
+            display: inline-block;
+            width: 110px;
+        }
+        input[type="number"], select {
+            margin-bottom: 4px;
+            width: 100px;
+        }
+        section {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        section h3 {
+            margin-top: 0;
+        }
+        /* hide all sections by default */
+        section {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<h1>Stochastic Processes Interactive Dashboard</h1>
+
+<div>
+    <label for="model-select"><strong>Select Model:</strong></label>
+    <select id="model-select">
+        <option value="">--Choose--</option>
+        <option value="sde">SDE (GBM)</option>
+        <option value="bm">Brownian / GBM</option>
+        <option value="ou">Ornstein–Uhlenbeck</option>
+        <option value="cir">CIR Process</option>
+        <option value="mc_option">Monte Carlo Option</option>
+        <option value="kalman">Kalman Filter</option>
+        <option value="pde">BS PDE (Explicit)</option>
+        <option value="black_scholes">BS PDE (Crank–Nicolson)</option>
+        <option value="gillespie">Gillespie SSA</option>
+        <option value="markov">Markov Chain</option>
+        <option value="meanreversion">Mean Reversion</option>
+        <option value="jumpdiffusion">Jump / Lévy</option>
+        <option value="risk">Risk Model</option>
+    </select>
+</div>
+
+<!-- SDE controls -->
+<section id="sde-controls">
+    <h3>SDE Simulation (GBM)</h3>
+    <label>Method:</label>
+    <select id="sde-method">
+        <option value="euler">Euler</option>
+        <option value="milstein">Milstein</option>
+        <option value="heun">Heun</option>
+    </select><br>
+    <label>μ:</label><input id="sde-mu" type="number" step="0.01" value="0.1"><br>
+    <label>σ:</label><input id="sde-sigma" type="number" step="0.01" value="0.3"><br>
+    <label>x₀:</label><input id="sde-x0" type="number" step="0.1" value="1.0"><br>
+    <label>T:</label><input id="sde-T" type="number" step="0.1" value="1.0"><br>
+    <label>N:</label><input id="sde-N" type="number" step="1" value="500"><br>
+    <button id="sde-run">Run</button>
+</section>
+
+<!-- Brownian / GBM controls -->
+<section id="bm-controls">
+    <h3>Brownian / Geometric Brownian Motion</h3>
+    <label>Type:</label>
+    <select id="bm-type">
+        <option value="bm">Brownian</option>
+        <option value="gbm">Geometric Brownian</option>
+    </select><br>
+    <label>μ:</label><input id="bm-mu" type="number" step="0.01" value="0.0"><br>
+    <label>σ:</label><input id="bm-sigma" type="number" step="0.01" value="1.0"><br>
+    <label id="bm-x0-label">x₀:</label><input id="bm-x0" type="number" step="0.1" value="0.0"><br>
+    <label id="bm-s0-label" style="display:none">s₀:</label><input id="bm-s0" type="number" step="0.1" value="1.0" style="display:none"><br>
+    <label>T:</label><input id="bm-T" type="number" step="0.1" value="1.0"><br>
+    <label>N:</label><input id="bm-N" type="number" step="1" value="500"><br>
+    <button id="bm-run">Run</button>
+</section>
+
+<!-- OU controls -->
+<section id="ou-controls">
+    <h3>Ornstein–Uhlenbeck Process</h3>
+    <label>θ (theta):</label><input id="ou-theta" type="number" step="0.1" value="1.5"><br>
+    <label>μ:</label><input id="ou-mu" type="number" step="0.1" value="0.0"><br>
+    <label>σ:</label><input id="ou-sigma" type="number" step="0.1" value="0.3"><br>
+    <label>x₀:</label><input id="ou-x0" type="number" step="0.1" value="0.0"><br>
+    <label>T:</label><input id="ou-T" type="number" step="0.1" value="1.0"><br>
+    <label>N:</label><input id="ou-N" type="number" step="1" value="500"><br>
+    <button id="ou-run">Run</button>
+</section>
+
+<!-- CIR controls -->
+<section id="cir-controls">
+    <h3>CIR Process</h3>
+    <label>κ (kappa):</label><input id="cir-kappa" type="number" step="0.1" value="1.5"><br>
+    <label>θ (theta):</label><input id="cir-theta" type="number" step="0.01" value="0.04"><br>
+    <label>σ:</label><input id="cir-sigma" type="number" step="0.01" value="0.1"><br>
+    <label>x₀:</label><input id="cir-x0" type="number" step="0.01" value="0.02"><br>
+    <label>T:</label><input id="cir-T" type="number" step="0.1" value="1.0"><br>
+    <label>N:</label><input id="cir-N" type="number" step="1" value="500"><br>
+    <button id="cir-run">Run</button>
+</section>
+
+<!-- Monte Carlo Option controls -->
+<section id="mc_option-controls">
+    <h3>Monte Carlo Option Pricing</h3>
+    <label>μ:</label><input id="mc-mu" type="number" step="0.01" value="0.05"><br>
+    <label>σ:</label><input id="mc-sigma" type="number" step="0.01" value="0.2"><br>
+    <label>r:</label><input id="mc-r" type="number" step="0.01" value="0.05"><br>
+    <label>s₀:</label><input id="mc-s0" type="number" step="0.1" value="100"><br>
+    <label>K:</label><input id="mc-K" type="number" step="0.1" value="100"><br>
+    <label>T:</label><input id="mc-T" type="number" step="0.1" value="1.0"><br>
+    <label>N paths:</label><input id="mc-N_paths" type="number" step="1" value="1000"><br>
+    <label>N steps:</label><input id="mc-N_steps" type="number" step="1" value="252"><br>
+    <button id="mc-run">Run</button>
+</section>
+
+<!-- Kalman filter controls -->
+<section id="kalman-controls">
+    <h3>Kalman Filter</h3>
+    <label>Δt:</label><input id="kalman-dt" type="number" step="0.01" value="0.1"><br>
+    <label>q:</label><input id="kalman-q" type="number" step="0.0001" value="0.0001"><br>
+    <label>r:</label><input id="kalman-r" type="number" step="0.001" value="0.05"><br>
+    <label>N:</label><input id="kalman-N" type="number" step="1" value="100"><br>
+    <button id="kalman-run">Run</button>
+</section>
+
+<!-- PDE explicit controls -->
+<section id="pde-controls">
+    <h3>Black–Scholes PDE (Explicit)</h3>
+    <label>S_max:</label><input id="pde-Smax" type="number" step="1" value="200"><br>
+    <label>T:</label><input id="pde-T" type="number" step="0.1" value="1.0"><br>
+    <label>N_S:</label><input id="pde-NS" type="number" step="1" value="200"><br>
+    <label>N_t:</label><input id="pde-Nt" type="number" step="1" value="200"><br>
+    <label>r:</label><input id="pde-r" type="number" step="0.01" value="0.05"><br>
+    <label>σ:</label><input id="pde-sigma" type="number" step="0.01" value="0.2"><br>
+    <label>K:</label><input id="pde-K" type="number" step="0.1" value="100"><br>
+    <label>Type:</label>
+    <select id="pde-type">
+        <option value="call">Call</option>
+        <option value="put">Put</option>
+    </select><br>
+    <button id="pde-run">Run</button>
+</section>
+
+<!-- Crank–Nicolson BS controls -->
+<section id="black_scholes-controls">
+    <h3>Black–Scholes PDE (Crank–Nicolson)</h3>
+    <label>S_max:</label><input id="bs-Smax" type="number" step="1" value="300"><br>
+    <label>T:</label><input id="bs-T" type="number" step="0.1" value="1.0"><br>
+    <label>N_S:</label><input id="bs-NS" type="number" step="1" value="200"><br>
+    <label>N_t:</label><input id="bs-Nt" type="number" step="1" value="500"><br>
+    <label>r:</label><input id="bs-r" type="number" step="0.01" value="0.05"><br>
+    <label>σ:</label><input id="bs-sigma" type="number" step="0.01" value="0.2"><br>
+    <label>K:</label><input id="bs-K" type="number" step="0.1" value="100"><br>
+    <label>Type:</label>
+    <select id="bs-type">
+        <option value="call">Call</option>
+        <option value="put">Put</option>
+    </select><br>
+    <button id="bs-run">Run</button>
+</section>
+
+<!-- Gillespie controls -->
+<section id="gillespie-controls">
+    <h3>Gillespie SSA (A ⇌ B)</h3>
+    <label>k₁:</label><input id="gill-k1" type="number" step="0.01" value="0.1"><br>
+    <label>k₂:</label><input id="gill-k2" type="number" step="0.01" value="0.05"><br>
+    <label>A₀:</label><input id="gill-A0" type="number" step="1" value="100"><br>
+    <label>B₀:</label><input id="gill-B0" type="number" step="1" value="0"><br>
+    <label>t_max:</label><input id="gill-tmax" type="number" step="1" value="100"><br>
+    <label>Runs:</label><input id="gill-runs" type="number" step="1" value="1"><br>
+    <button id="gill-run">Run</button>
+</section>
+
+<!-- Markov controls -->
+<section id="markov-controls">
+    <h3>Two‑State Markov Chain</h3>
+    <label>P00:</label><input id="markov-P00" type="number" step="0.01" value="0.9"><br>
+    <label>P01:</label><input id="markov-P01" type="number" step="0.01" value="0.1"><br>
+    <label>P10:</label><input id="markov-P10" type="number" step="0.01" value="0.5"><br>
+    <label>P11:</label><input id="markov-P11" type="number" step="0.01" value="0.5"><br>
+    <label>n steps:</label><input id="markov-nsteps" type="number" step="1" value="20"><br>
+    <button id="markov-run">Run</button>
+</section>
+
+<!-- Mean reversion controls -->
+<section id="meanreversion-controls">
+    <h3>Mean Reversion & Pairs Trading</h3>
+    <label>θ:</label><input id="mr-theta" type="number" step="0.1" value="1.5"><br>
+    <label>μ:</label><input id="mr-mu" type="number" step="0.1" value="0.0"><br>
+    <label>σ:</label><input id="mr-sigma" type="number" step="0.1" value="0.1"><br>
+    <label>T:</label><input id="mr-T" type="number" step="0.1" value="1.0"><br>
+    <label>N:</label><input id="mr-N" type="number" step="1" value="500"><br>
+    <label>Entry z:</label><input id="mr-entry" type="number" step="0.1" value="1.0"><br>
+    <label>Exit z:</label><input id="mr-exit" type="number" step="0.1" value="0.0"><br>
+    <button id="mr-run">Run</button>
+</section>
+
+<!-- Jump diffusion controls -->
+<section id="jumpdiffusion-controls">
+    <h3>Jump / Lévy Processes</h3>
+    <label>Model:</label>
+    <select id="jump-model">
+        <option value="merton">Merton</option>
+        <option value="vg">Variance Gamma</option>
+        <option value="nig">Normal Inverse Gaussian</option>
+    </select><br>
+    <label>μ:</label><input id="jump-mu" type="number" step="0.01" value="0.1"><br>
+    <label>σ:</label><input id="jump-sigma" type="number" step="0.01" value="0.2"><br>
+    <label>λ:</label><input id="jump-lambda" type="number" step="0.1" value="0.5"><br>
+    <label>μ_j:</label><input id="jump-mu_j" type="number" step="0.01" value="-0.1"><br>
+    <label>σ_j:</label><input id="jump-sigma_j" type="number" step="0.01" value="0.3"><br>
+    <label>ν (nu):</label><input id="jump-nu" type="number" step="0.01" value="0.2"><br>
+    <label>θ (theta_vg):</label><input id="jump-theta_vg" type="number" step="0.01" value="0.1"><br>
+    <label>α:</label><input id="jump-alpha" type="number" step="0.1" value="3.0"><br>
+    <label>β:</label><input id="jump-beta" type="number" step="0.1" value="-1.0"><br>
+    <label>δ:</label><input id="jump-delta" type="number" step="0.01" value="0.1"><br>
+    <label>μ (NIG):</label><input id="jump-mu_nig" type="number" step="0.01" value="0.05"><br>
+    <label>T:</label><input id="jump-T" type="number" step="0.1" value="1.0"><br>
+    <label>N:</label><input id="jump-N" type="number" step="1" value="500"><br>
+    <label>s₀:</label><input id="jump-s0" type="number" step="0.1" value="100"><br>
+    <button id="jump-run">Run</button>
+</section>
+
+<!-- Risk model controls -->
+<section id="risk-controls">
+    <h3>Risk Modelling (VaR & ES)</h3>
+    <label>α (confidence):</label><input id="risk-alpha" type="number" step="0.01" value="0.95"><br>
+    <label>T:</label><input id="risk-T" type="number" step="1" value="1000"><br>
+    <label>α₀:</label><input id="risk-a0" type="number" step="0.0001" value="0.0001"><br>
+    <label>α₁:</label><input id="risk-a1" type="number" step="0.01" value="0.05"><br>
+    <label>β₁:</label><input id="risk-b1" type="number" step="0.01" value="0.9"><br>
+    <label>df:</label><input id="risk-df" type="number" step="1" value="5"><br>
+    <button id="risk-run">Run</button>
+</section>
+
+<!-- Plot containers -->
+<div id="plot1" style="width:100%;height:400px;"></div>
+<div id="plot2" style="width:100%;height:400px;"></div>
+
+<script>
+// Utility: hide all sections and show the selected one
+const sections = {
+    sde: document.getElementById('sde-controls'),
+    bm: document.getElementById('bm-controls'),
+    ou: document.getElementById('ou-controls'),
+    cir: document.getElementById('cir-controls'),
+    mc_option: document.getElementById('mc_option-controls'),
+    kalman: document.getElementById('kalman-controls'),
+    pde: document.getElementById('pde-controls'),
+    black_scholes: document.getElementById('black_scholes-controls'),
+    gillespie: document.getElementById('gillespie-controls'),
+    markov: document.getElementById('markov-controls'),
+    meanreversion: document.getElementById('meanreversion-controls'),
+    jumpdiffusion: document.getElementById('jumpdiffusion-controls'),
+    risk: document.getElementById('risk-controls')
+};
+
+document.getElementById('model-select').addEventListener('change', (ev) => {
+    const value = ev.target.value;
+    // toggle x0/s0 labels for Brownian/GBM based on type
+    if (value === 'bm') {
+        updateBmFields();
+    }
+    Object.keys(sections).forEach(key => {
+        sections[key].style.display = (key === value) ? 'block' : 'none';
+    });
+    // Clear previous plots when switching models
+    Plotly.purge('plot1');
+    Plotly.purge('plot2');
+});
+
+// Brownian motion: toggle x0 and s0 fields when type changes
+function updateBmFields() {
+    const type = document.getElementById('bm-type').value;
+    const x0Label = document.getElementById('bm-x0-label');
+    const x0Input = document.getElementById('bm-x0');
+    const s0Label = document.getElementById('bm-s0-label');
+    const s0Input = document.getElementById('bm-s0');
+    if (type === 'bm') {
+        x0Label.style.display = '';
+        x0Input.style.display = '';
+        s0Label.style.display = 'none';
+        s0Input.style.display = 'none';
+    } else {
+        x0Label.style.display = 'none';
+        x0Input.style.display = 'none';
+        s0Label.style.display = '';
+        s0Input.style.display = '';
+    }
+}
+document.getElementById('bm-type').addEventListener('change', updateBmFields);
+
+// Fetch helper
+async function fetchJSON(url) {
+    const resp = await fetch(url);
+    if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(text || 'Request failed');
+    }
+    return resp.json();
+}
+
+// SDE simulation handler
+document.getElementById('sde-run').addEventListener('click', async () => {
+    const method = document.getElementById('sde-method').value;
+    const mu = document.getElementById('sde-mu').value;
+    const sigma = document.getElementById('sde-sigma').value;
+    const x0 = document.getElementById('sde-x0').value;
+    const T = document.getElementById('sde-T').value;
+    const N = document.getElementById('sde-N').value;
+    const params = new URLSearchParams({ method, mu, sigma, x0, T, N });
+    try {
+        const data = await fetchJSON(`/api/sde?${params}`);
+        const trace = { x: data.t, y: data.x, type: 'scatter', name: 'X(t)' };
+        Plotly.newPlot('plot1', [trace], { title: 'SDE Simulation' });
+        Plotly.purge('plot2');
+    } catch (err) {
+        alert(err);
+    }
+});
+
+// Brownian/GBM handler
+document.getElementById('bm-run').addEventListener('click', async () => {
+    const type = document.getElementById('bm-type').value;
+    const mu = document.getElementById('bm-mu').value;
+    const sigma = document.getElementById('bm-sigma').value;
+    const x0 = document.getElementById('bm-x0').value;
+    const s0 = document.getElementById('bm-s0').value;
+    const T = document.getElementById('bm-T').value;
+    const N = document.getElementById('bm-N').value;
+    const params = new URLSearchParams({ type, mu, sigma, x0, s0, T, N });
+    try {
+        const data = await fetchJSON(`/api/brownian?${params}`);
+        let trace;
+        if (type === 'bm') {
+            trace = { x: data.t, y: data.x, type: 'scatter', name: 'X(t)' };
+        } else {
+            trace = { x: data.t, y: data.s, type: 'scatter', name: 'S(t)' };
+        }
+        Plotly.newPlot('plot1', [trace], { title: type === 'bm' ? 'Brownian Motion' : 'Geometric Brownian Motion' });
+        Plotly.purge('plot2');
+    } catch (err) {
+        alert(err);
+    }
+});
+
+// OU handler
+document.getElementById('ou-run').addEventListener('click', async () => {
+    const theta = document.getElementById('ou-theta').value;
+    const mu = document.getElementById('ou-mu').value;
+    const sigma = document.getElementById('ou-sigma').value;
+    const x0 = document.getElementById('ou-x0').value;
+    const T = document.getElementById('ou-T').value;
+    const N = document.getElementById('ou-N').value;
+    const params = new URLSearchParams({ theta, mu, sigma, x0, T, N });
+    try {
+        const data = await fetchJSON(`/api/ou?${params}`);
+        const trace = { x: data.t, y: data.x, type: 'scatter', name: 'X(t)' };
+        Plotly.newPlot('plot1', [trace], { title: 'Ornstein–Uhlenbeck Process' });
+        Plotly.purge('plot2');
+    } catch (err) {
+        alert(err);
+    }
+});
+
+// CIR handler
+document.getElementById('cir-run').addEventListener('click', async () => {
+    const kappa = document.getElementById('cir-kappa').value;
+    const theta = document.getElementById('cir-theta').value;
+    const sigma = document.getElementById('cir-sigma').value;
+    const x0 = document.getElementById('cir-x0').value;
+    const T = document.getElementById('cir-T').value;
+    const N = document.getElementById('cir-N').value;
+    const params = new URLSearchParams({ kappa, theta, sigma, x0, T, N });
+    try {
+        const data = await fetchJSON(`/api/cir?${params}`);
+        const trace = { x: data.t, y: data.x, type: 'scatter', name: 'X(t)' };
+        Plotly.newPlot('plot1', [trace], { title: 'CIR Process' });
+        Plotly.purge('plot2');
+    } catch (err) {
+        alert(err);
+    }
+});
+
+// Monte Carlo option handler
+document.getElementById('mc-run').addEventListener('click', async () => {
+    const mu = document.getElementById('mc-mu').value;
+    const sigma = document.getElementById('mc-sigma').value;
+    const r = document.getElementById('mc-r').value;
+    const s0 = document.getElementById('mc-s0').value;
+    const K = document.getElementById('mc-K').value;
+    const T = document.getElementById('mc-T').value;
+    const N_paths = document.getElementById('mc-N_paths').value;
+    const N_steps = document.getElementById('mc-N_steps').value;
+    const params = new URLSearchParams({ mu, sigma, r, s0, K, T, N_paths, N_steps });
+    try {
+        const data = await fetchJSON(`/api/mc_option?${params}`);
+        const histTrace = {
+            x: data.discounted_payoffs,
+            type: 'histogram',
+            name: 'Discounted Payoffs',
+            opacity: 0.6,
+            marker: { color: 'steelblue' }
+        };
+        const layout1 = { title: 'Payoff Distribution', xaxis: { title: 'Payoff' }, yaxis: { title: 'Frequency' } };
+        Plotly.newPlot('plot1', [histTrace], layout1);
+        const priceTrace = {
+            x: ['Monte Carlo', 'Black–Scholes'],
+            y: [data.mean, data.bs_price],
+            type: 'bar',
+            name: 'Option Price',
+            marker: { color: ['teal','orange'] }
+        };
+        const layout2 = { title: 'Option Price Comparison', yaxis: { title: 'Price' } };
+        Plotly.newPlot('plot2', [priceTrace], layout2);
+    } catch (err) {
+        alert(err);
+    }
+});
+
+// Kalman handler
+document.getElementById('kalman-run').addEventListener('click', async () => {
+    const dt = document.getElementById('kalman-dt').value;
+    const q = document.getElementById('kalman-q').value;
+    const r = document.getElementById('kalman-r').value;
+    const N = document.getElementById('kalman-N').value;
+    const params = new URLSearchParams({ dt, q, r, N });
+    try {
+        const data = await fetchJSON(`/api/kalman?${params}`);
+        const t = data.t;
+        const traceTrue = { x: t, y: data.true, type: 'scatter', name: 'True Position' };
+        const traceMeas = { x: t, y: data.measurements, type: 'scatter', name: 'Measurements', mode:'markers', marker:{size:4} };
+        const traceEst = { x: t, y: data.estimates, type: 'scatter', name: 'Estimate' };
+        Plotly.newPlot('plot1', [traceTrue, traceMeas, traceEst], { title: 'Kalman Filter Tracking' });
+        const varianceTrace = { x: t, y: data.variance, type:'scatter', name:'Variance' };
+        Plotly.newPlot('plot2', [varianceTrace], { title: 'Estimation Variance' });
+    } catch (err) {
+        alert(err);
+    }
+});
+
+// PDE explicit handler
+document.getElementById('pde-run').addEventListener('click', async () => {
+    const S_max = document.getElementById('pde-Smax').value;
+    const T = document.getElementById('pde-T').value;
+    const N_S = document.getElementById('pde-NS').value;
+    const N_t = document.getElementById('pde-Nt').value;
+    const r = document.getElementById('pde-r').value;
+    const sigma = document.getElementById('pde-sigma').value;
+    const K = document.getElementById('pde-K').value;
+    const option_type = document.getElementById('pde-type').value;
+    const params = new URLSearchParams({ S_max, T, N_S, N_t, r, sigma, K, option_type });
+    try {
+        const data = await fetchJSON(`/api/pde?${params}`);
+        const trace = { x: data.S, y: data.V0, type:'scatter', name:'Option Value' };
+        Plotly.newPlot('plot1', [trace], { title: 'Explicit FD Option Values at t=0', xaxis:{ title:'Asset Price' }, yaxis:{ title:'Option Value' } });
+        Plotly.purge('plot2');
+    } catch (err) {
+        alert(err);
+    }
+});
+
+// Crank–Nicolson handler
+document.getElementById('bs-run').addEventListener('click', async () => {
+    const S_max = document.getElementById('bs-Smax').value;
+    const T = document.getElementById('bs-T').value;
+    const N_S = document.getElementById('bs-NS').value;
+    const N_t = document.getElementById('bs-Nt').value;
+    const r = document.getElementById('bs-r').value;
+    const sigma = document.getElementById('bs-sigma').value;
+    const K = document.getElementById('bs-K').value;
+    const option_type = document.getElementById('bs-type').value;
+    const params = new URLSearchParams({ S_max, T, N_S, N_t, r, sigma, K, option_type });
+    try {
+        const data = await fetchJSON(`/api/black_scholes?${params}`);
+        const trace = { x: data.S, y: data.V0, type:'scatter', name:'Option Value' };
+        Plotly.newPlot('plot1', [trace], { title:'Crank–Nicolson Option Values at t=0', xaxis:{ title:'Asset Price' }, yaxis:{ title:'Option Value' } });
+        Plotly.purge('plot2');
+    } catch (err) {
+        alert(err);
+    }
+});
+
+// Gillespie handler
+document.getElementById('gill-run').addEventListener('click', async () => {
+    const k1 = document.getElementById('gill-k1').value;
+    const k2 = document.getElementById('gill-k2').value;
+    const A0 = document.getElementById('gill-A0').value;
+    const B0 = document.getElementById('gill-B0').value;
+    const t_max = document.getElementById('gill-tmax').value;
+    const runs = document.getElementById('gill-runs').value;
+    const params = new URLSearchParams({ k1, k2, A0, B0, t_max, runs });
+    try {
+        const data = await fetchJSON(`/api/gillespie?${params}`);
+        const traceA = { x: data.times, y: data.A, type:'scatter', name:'A' };
+        const traceB = { x: data.times, y: data.B, type:'scatter', name:'B' };
+        Plotly.newPlot('plot1', [traceA, traceB], { title:'Gillespie Simulation' });
+        if (data.final_As) {
+            const hist = { x: data.final_As, type:'histogram', name:'Final A', opacity:0.6, marker:{ color:'teal' } };
+            Plotly.newPlot('plot2', [hist], { title:'Distribution of Final A across runs', xaxis:{ title:'Final A' }, yaxis:{ title:'Frequency' } });
+        } else {
+            Plotly.purge('plot2');
+        }
+    } catch (err) {
+        alert(err);
+    }
+});
+
+// Markov chain handler
+document.getElementById('markov-run').addEventListener('click', async () => {
+    const P00 = document.getElementById('markov-P00').value;
+    const P01 = document.getElementById('markov-P01').value;
+    const P10 = document.getElementById('markov-P10').value;
+    const P11 = document.getElementById('markov-P11').value;
+    const n_steps = document.getElementById('markov-nsteps').value;
+    const params = new URLSearchParams({ P00, P01, P10, P11, n_steps });
+    try {
+        const data = await fetchJSON(`/api/markov?${params}`);
+        // stationary distribution bar chart
+        const stat = { x:['State 0','State 1'], y:data.stationary, type:'bar', name:'Stationary' };
+        // evolution of probabilities
+        const t = data.dist_time.map((_,i) => i);
+        const p0 = data.dist_time.map(arr => arr[0]);
+        const p1 = data.dist_time.map(arr => arr[1]);
+        const trace0 = { x: t, y: p0, type:'scatter', name:'P(State=0)' };
+        const trace1 = { x: t, y: p1, type:'scatter', name:'P(State=1)' };
+        Plotly.newPlot('plot1', [trace0, trace1], { title:'Markov Chain Distribution Evolution', xaxis:{ title:'Step' }, yaxis:{ title:'Probability' } });
+        const histHits = { x: data.hits, type:'histogram', name:'Hitting Time', opacity:0.7, marker:{ color:'salmon' } };
+        Plotly.newPlot('plot2', [stat, histHits], { barmode:'group', title:'Stationary Distribution & Hitting Times', yaxis:{ title:'Value' } });
+    } catch (err) {
+        alert(err);
+    }
+});
+
+// Mean reversion handler
+document.getElementById('mr-run').addEventListener('click', async () => {
+    const theta = document.getElementById('mr-theta').value;
+    const mu = document.getElementById('mr-mu').value;
+    const sigma = document.getElementById('mr-sigma').value;
+    const T = document.getElementById('mr-T').value;
+    const N = document.getElementById('mr-N').value;
+    const entry_z = document.getElementById('mr-entry').value;
+    const exit_z = document.getElementById('mr-exit').value;
+    const params = new URLSearchParams({ theta, mu, sigma, T, N, entry_z, exit_z });
+    try {
+        const data = await fetchJSON(`/api/meanreversion?${params}`);
+        const t = Array.from({length: data.z_scores.length}, (_,i) => i);
+        const zTrace = { x:t, y:data.z_scores, type:'scatter', name:'Z-score' };
+        const posTrace = { x:t, y:data.positions, type:'scatter', name:'Position' };
+        Plotly.newPlot('plot1', [zTrace, posTrace], { title:'Mean Reversion Trading Signals', yaxis:{ title:'Z-score / Position' } });
+        const pnlTrace = { x:t, y:data.cum_pnl, type:'scatter', name:'Cumulative P&L' };
+        Plotly.newPlot('plot2', [pnlTrace], { title:'Cumulative P&L' });
+    } catch (err) {
+        alert(err);
+    }
+});
+
+// Jump diffusion handler
+document.getElementById('jump-run').addEventListener('click', async () => {
+    const model = document.getElementById('jump-model').value;
+    const muMerton = document.getElementById('jump-mu').value;
+    const sigma = document.getElementById('jump-sigma').value;
+    const lambda_ = document.getElementById('jump-lambda').value;
+    const mu_j = document.getElementById('jump-mu_j').value;
+    const sigma_j = document.getElementById('jump-sigma_j').value;
+    const nu = document.getElementById('jump-nu').value;
+    const theta_vg = document.getElementById('jump-theta_vg').value;
+    const alpha = document.getElementById('jump-alpha').value;
+    const beta = document.getElementById('jump-beta').value;
+    const delta = document.getElementById('jump-delta').value;
+    const muNig = document.getElementById('jump-mu_nig').value;
+    const T = document.getElementById('jump-T').value;
+    const N = document.getElementById('jump-N').value;
+    const s0 = document.getElementById('jump-s0').value;
+    const params = new URLSearchParams();
+    params.set('model', model);
+    params.set('T', T);
+    params.set('N', N);
+    params.set('s0', s0);
+    // set model‑specific parameters
+    if (model === 'merton') {
+        params.set('mu', muMerton);
+        params.set('sigma', sigma);
+        params.set('lambda', lambda_);
+        params.set('mu_j', mu_j);
+        params.set('sigma_j', sigma_j);
+    } else if (model === 'vg') {
+        params.set('sigma', sigma);
+        params.set('nu', nu);
+        params.set('theta', theta_vg);
+    } else if (model === 'nig') {
+        params.set('alpha', alpha);
+        params.set('beta', beta);
+        params.set('delta', delta);
+        params.set('mu', muNig);
+    }
+    try {
+        const data = await fetchJSON(`/api/jumpdiffusion?${params}`);
+        const trace = { x: data.t, y: data.s, type: 'scatter', name: 'S(t)' };
+        Plotly.newPlot('plot1', [trace], { title: `${model.toUpperCase()} Process` });
+        Plotly.purge('plot2');
+    } catch (err) {
+        alert(err);
+    }
+});
+
+// Risk modelling handler
+document.getElementById('risk-run').addEventListener('click', async () => {
+    const alpha = document.getElementById('risk-alpha').value;
+    const T = document.getElementById('risk-T').value;
+    const alpha0 = document.getElementById('risk-a0').value;
+    const alpha1 = document.getElementById('risk-a1').value;
+    const beta1 = document.getElementById('risk-b1').value;
+    const df = document.getElementById('risk-df').value;
+    const params = new URLSearchParams({ alpha, T, alpha0, alpha1, beta1, df });
+    try {
+        const data = await fetchJSON(`/api/risk?${params}`);
+        const returns = data.returns;
+        const hist = { x: returns, type:'histogram', name:'Returns', opacity:0.6, marker:{ color:'steelblue' } };
+        const layout1 = { title:'Portfolio Return Distribution', xaxis:{ title:'Return' }, yaxis:{ title:'Frequency' } };
+        Plotly.newPlot('plot1', [hist], layout1);
+        const volTrace = { x: Array.from({length: data.volatility.length}, (_,i) => i), y: data.volatility, type:'scatter', name:'Volatility' };
+        const VaRTrace = { x:['VaR','ES'], y:[data.VaR, data.ES], type:'bar', name:'Risk Measures', marker:{ color:['red','purple'] } };
+        Plotly.newPlot('plot2', [volTrace, VaRTrace], { title:'Volatility & Risk Measures', yaxis:{ title:'Value' } });
+    } catch (err) {
+        alert(err);
+    }
+});
+
+// initialise hide for Brownian fields
+updateBmFields();
+</script>
+</body>
+</html>
