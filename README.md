@@ -1,6 +1,6 @@
 # StochLab
 
-A unified library for **stochastic process simulations** and **financial modelling**, including diffusion models, jump-diffusion models, PDE-based option pricing, and epidemiological dynamics (Gillespie and SIR models).  
+An interactive full-stack stochastic processes and financial modelling dashboard allowing anyone to perform parameter exploration and risk analysis within the dynamic dashboard for many stochastic and financial models.  
 
 ---
 
